@@ -106,24 +106,28 @@
         async function fetchDesigns() {
             let repoUrl = "https://api.github.com/repos/maverickhewitt/MavDesign/contents/design";
             let response = await fetch(repoUrl);
-            let folders = await response.json();
-            
+            let folders = await response.json(); // Get client folders inside "design"
+
             let designs = [];
+
             for (let folder of folders) {
-                let clientUrl = repoUrl + '/' + folder.name;
-                let clientResponse = await fetch(clientUrl);
-                let clientFiles = await clientResponse.json();
-                
-                for (let file of clientFiles) {
-                    if (file.type === "file" && [".jpg", ".png", ".jpeg", ".pdf"].some(ext => file.name.endsWith(ext))) {
-                        designs.push({
-                            name: file.name,
-                            url: file.download_url,
-                            client: folder.name
-                        });
+                if (folder.type === "dir") { // Check if it's a directory (client folder)
+                    let clientUrl = repoUrl + '/' + folder.name;
+                    let clientResponse = await fetch(clientUrl);
+                    let clientFiles = await clientResponse.json(); // Get files inside client folder
+
+                    for (let file of clientFiles) {
+                        if (file.type === "file" && [".jpg", ".png", ".jpeg", ".pdf"].some(ext => file.name.endsWith(ext))) {
+                            designs.push({
+                                name: file.name,
+                                url: file.download_url,
+                                client: folder.name
+                            });
+                        }
                     }
                 }
             }
+
             displayDesigns(designs);
         }
         
