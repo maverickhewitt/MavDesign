@@ -5,91 +5,133 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MavDesign</title>
     <style>
-            body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 20px;
-        background-color: #121212;
-        color: #f0f0f0;
-    }
-    h1 { font-size: 2em; color: #ffffff; }
-    h3 { font-size: 1.5em; color: #cccccc; }
-    .search-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        max-width: 100%;
-        width: 90%;
-        margin: 0 auto;
-    }
-    input {
-        padding: 10px;
-        flex: 1;
-        min-width: 150px;
-        background-color: #333;
-        border: 1px solid #555;
-        color: #fff;
-        max-width: none;
-    }
-    button {
-        padding: 10px 15px;
-        cursor: pointer;
-        background-color: #1e88e5;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-    .design-container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 20px;
-    }
-    .design-item {
-        margin: 10px;
-        padding: 10px;
-        border: 1px solid #444;
-        border-radius: 5px;
-        width: 90%;
-        max-width: 200px;
-        text-align: center;
-        background-color: #222;
-    }
-    .design-item img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 5px;
-    }
-    a {
-        color: #1e88e5;
-        text-decoration: none;
-    }
-    a:hover {
-        text-decoration: underline;
-    }
-    @media (max-width: 600px) {
-        h1 { font-size: 1.8em; }
-        h3 { font-size: 1.3em; }
-        .search-container {
-            width: 90%;
-            flex-wrap: nowrap;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #121212;
+            color: #f0f0f0;
         }
-        input, button {
-            width: auto;
+        h1 { font-size: 2em; color: #ffffff; }
+        h3 { font-size: 1.5em; color: #cccccc; }
+        .search-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            max-width: 100%;
+            width: 90%;
+            margin: 0 auto;
+        }
+        input {
+            padding: 10px;
+            flex: 1;
+            min-width: 150px;
+            background-color: #333;
+            border: 1px solid #555;
+            color: #fff;
             max-width: none;
         }
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
         .design-container {
-            flex-direction: column;
-            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
         }
         .design-item {
-            width: 100%;
-            max-width: 300px;
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 200px;
+            text-align: center;
+            background-color: #222;
+            cursor: pointer;
         }
-    }
+        .design-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        a {
+            color: #1e88e5;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 1200px;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8em; }
+            h3 { font-size: 1.3em; }
+            .search-container {
+                width: 90%;
+                flex-wrap: nowrap;
+            }
+            input, button {
+                width: auto;
+                max-width: none;
+            }
+            .design-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .design-item {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -101,57 +143,89 @@
     </div>
     
     <div class="design-container" id="designList"></div>
+
+    <div id="fullscreenModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
     
     <script>
-        async function fetchDesigns() {
+        async function fetchFolders() {
             let repoUrl = "https://api.github.com/repos/maverickhewitt/MavDesign/contents/design";
             let response = await fetch(repoUrl);
             let folders = await response.json(); 
 
-            let designs = [];
+            let folderList = folders.filter(folder => folder.type === "dir");
 
-            for (let folder of folders) {
-                if (folder.type === "dir") { // Check if it's a directory (client folder)
-                    let clientUrl = repoUrl + '/' + folder.name;
-                    let clientResponse = await fetch(clientUrl);
-                    let clientFiles = await clientResponse.json(); 
-
-                    for (let file of clientFiles) {
-                        if (file.type === "file" && [".jpg", ".png", ".jpeg", ".pdf"].some(ext => file.name.endsWith(ext))) {
-                            designs.push({
-                                name: file.name,
-                                url: file.download_url,
-                                client: folder.name
-                            });
-                        }
-                    }
-                }
-            }
-
-            displayDesigns(designs);
+            displayFolders(folderList);
         }
-        
-        function displayDesigns(designs) {
+
+        function displayFolders(folders) {
             let container = document.getElementById("designList");
             container.innerHTML = "";
-            designs.forEach(design => {
+            folders.forEach(folder => {
                 let item = document.createElement("div");
                 item.className = "design-item";
-                
-                let preview = design.url.endsWith(".pdf") ? 
-                    `<a href="${design.url}" target="_blank">Preview PDF</a>` : 
-                    `<img src="${design.url}" alt="${design.name}">`;
-                
-                item.innerHTML = `
-                    <h4>${design.client} - ${design.name}</h4>
-                    ${preview}
-                    <br>
-                    <a href="${design.url}" download>Download</a>
-                `;
+                item.innerHTML = `<h4>${folder.name}</h4>`;
+                item.addEventListener("click", () => fetchImages(folder.name));
                 container.appendChild(item);
             });
         }
-        
+
+        async function fetchImages(folderName) {
+            let repoUrl = `https://api.github.com/repos/maverickhewitt/MavDesign/contents/design/${folderName}`;
+            let response = await fetch(repoUrl);
+            let files = await response.json(); 
+
+            let images = files.filter(file => [".jpg", ".png", ".jpeg", ".pdf"].some(ext => file.name.endsWith(ext)));
+
+            displayImages(images, folderName);
+        }
+
+        function displayImages(images, folderName) {
+            let container = document.getElementById("designList");
+            container.innerHTML = "";
+            images.forEach(image => {
+                let item = document.createElement("div");
+                item.className = "design-item";
+                
+                let preview = image.download_url.endsWith(".pdf") ? 
+                    `<a href="${image.download_url}" target="_blank">Preview PDF</a>` : 
+                    `<img src="${image.download_url}" alt="${image.name}">`;
+                
+                item.innerHTML = `
+                    <h4>${folderName} - ${image.name}</h4>
+                    ${preview}
+                    <br>
+                      <a href="#" class="fullscreen-link" data-fullscreen="${image.download_url}">View | </a>
+                    <a href="${image.download_url}" download>Download</a>
+                `;
+                container.appendChild(item);
+            });
+
+            document.querySelectorAll('.fullscreen-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const imageUrl = this.dataset.fullscreen;
+                    const modal = document.getElementById('fullscreenModal');
+                    const modalImg = document.getElementById('modalImage');
+                    modal.style.display = 'block';
+                    modalImg.src = imageUrl;
+                });
+            });
+
+            const modal = document.getElementById('fullscreenModal');
+            const closeBtn = document.querySelector('.close');
+            closeBtn.onclick = function() {
+                modal.style.display = 'none';
+            };
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+        }
+
         function searchDesign() {
             let query = document.getElementById("searchBox").value.toLowerCase();
             let items = document.querySelectorAll(".design-item");
@@ -159,8 +233,8 @@
                 item.style.display = item.innerText.toLowerCase().includes(query) ? "block" : "none";
             });
         }
-        
-        fetchDesigns();
+
+        fetchFolders();
     </script>
 </body>
 </html>
